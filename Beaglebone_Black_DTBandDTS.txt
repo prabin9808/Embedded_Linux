@@ -310,6 +310,13 @@ Learning by Existing BBB DTS Files
 
 The best way to learn is to study the BeagleBone DTS files:
 
+
+*************************************************************************************************
+Link:
+1. https://docs.kernel.org/devicetree/index.html?utm_source=chatgpt.com
+2. https://docs.kernel.org/devicetree/index.html?utm_source=chatgpt.com
+3. https://www.elinux.org/Beagleboard:BeagleBoneBlack#LATEST_PRODUCTION_FILES_.28C.29
+
 cd <kernel_source>/arch/arm/boot/dts
 
 less am335x-boneblack.dts

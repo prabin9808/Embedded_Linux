@@ -1,0 +1,344 @@
+
+
+
+**************************************************************************************************
+For Driver Development
+-------------------------
+The files you'll most commonly work with are:
+	1. arch/arm/boot/dts/am335x-boneblack.dts
+	2. arch/arm/boot/dts/am33xx.dtsi
+
+because:
+	1. am33xx.dtsi contains the AM335x SoC peripherals (GPIO, UART, I2C, etc.)
+	2. am335x-boneblack.dts contains the BeagleBone Black board-specific configuration
+--------------------------------------------------------------------------------------------------
+	uname -r
+	ls /boot
+	ls /boot/dtbs
+**************************************************************************************************
+sudo apt install device-tree-compiler
+
+**************************************************************************************************
+On a BeagleBone Black running Linux, there are two places to think about:
+
+	1. Device Tree Source Files (Kernel Source)
+		If you have the Linux kernel source code, DTS files are usually located in:
+		arch/arm/boot/dts/
+		For AM335x/BeagleBone Black, you'll find files such as:
+			arch/arm/boot/dts/am335x-boneblack.dts
+			arch/arm/boot/dts/am335x-bone.dts
+			arch/arm/boot/dts/am33xx.dtsi
+		Example:
+			cd /usr/src/linux
+			find . -name "*.dts"
+	2. Compiled Device Tree Blob on Running System
+		Linux doesn't use .dts files directly. It uses compiled .dtb files.
+
+		Typically located in:
+		/boot/dtbs/<kernel-version>/
+		or
+		/boot/
+		Examples:
+		ls /boot/dtbs/$(uname -r)/
+		You may see:
+			am335x-boneblack.dtb
+			am335x-bonegreen.dtb
+			...
+
+**************************************************************************************************
+Convert DTB Back to DTS
+--------------------------
+dtc -I dtb -O dts \
+    -o beaglebone.dts \
+    /boot/dtbs/$(uname -r)/am335x-boneblack.dtb
+	
+
+**************************************************************************************************
+Check Which DTB Is Being Used
+	cat /proc/cmdline
+	or
+	find /boot -name "*.dtb"
+
+**************************************************************************************************
+
+View the Running Device Tree
+	Linux exposes the loaded Device Tree at:
+	/sys/firmware/devicetree/base/
+
+	Example:
+		ls /sys/firmware/devicetree/base/
+
+	You can inspect nodes:
+		ls /sys/firmware/devicetree/base/ocp
+
+	or search:
+		grep -r gpio /sys/firmware/devicetree/base 2>/dev/null
+
+**************************************************************************************************
+To compile a DTS (Device Tree Source) file into a DTB (Device Tree Blob), use the Device Tree Compiler (dtc).
+	Install dtc
+	On Debian/Ubuntu/BeagleBone:
+		sudo apt update
+		sudo apt install device-tree-compiler
+	Verify:
+		dtc -v
+	Compile DTS → DTB
+	Suppose your file is:
+		myled.dts
+	Compile it:
+		dtc -I dts -O dtb -o myled.dtb myled.dts
+
+	Parameters:
+		Option	Meaning
+		-I dts	Input format is DTS
+		-O dtb	Output format is DTB
+		-o	Output file
+	Example
+		Create:
+		/dts-v1/;
+		/ {
+			model = "Test Device Tree";
+			testnode 
+			{
+				status = "okay";
+			};
+		};
+
+	Save as:
+		test.dts
+	Compile:
+		dtc -I dts -O dtb -o test.dtb test.dts
+	Decompile DTB → DTS
+
+	Useful for inspecting the running BeagleBone DTB:
+		dtc -I dtb -O dts -o output.dts am335x-boneblack.dtb
+When Building the Linux Kernel
+
+If you're modifying the kernel source tree, you usually don't run dtc manually.
+
+From the kernel source directory:
+
+make ARCH=arm am335x-boneblack.dtb
+
+or
+
+make dtbs
+
+The build system automatically invokes dtc.
+
+Generated DTBs appear in:
+
+arch/arm/boot/dts/
+Device Tree Overlays on BeagleBone Black
+
+You may also encounter overlays (.dts → .dtbo).
+
+Compile with:
+
+dtc -@ -I dts -O dtb -o myoverlay.dtbo myoverlay.dts
+
+The -@ option generates symbol information needed for overlays.
+
+Check for Syntax Errors
+
+Before compiling, validate:
+
+dtc -I dts -O dtb myled.dts
+
+Typical errors include:
+
+Missing ;
+Missing { }
+Incorrect node references (&gpio1)
+Undefined labels
+Typical Embedded Linux Workflow
+mydriver.c
+     +
+myboard.dts
+     ↓
+Compile DTS → DTB
+     ↓
+Copy DTB to /boot
+     ↓
+Reboot
+     ↓
+Kernel loads DTB
+     ↓
+Driver probe() runs
+
+**************************************************************************************************
+Yes. Device Tree has a well-defined syntax, and there are official documents that describe it.
+
+1. Best Place to Learn DTS Syntax
+
+The Linux kernel documentation contains Device Tree bindings and examples.
+
+You can read:
+
+Devicetree Specification (Official)
+Linux Devicetree Documentation
+
+These are the primary references used by kernel developers.
+
+Basic DTS Structure
+
+A minimal DTS file looks like:
+
+/dts-v1/;
+
+/ {
+    model = "My Board";
+    compatible = "mycompany,myboard";
+
+    my_node {
+        status = "okay";
+    };
+};
+Components
+Item	Meaning
+/dts-v1/;	DTS version declaration
+/ { }	Root node
+my_node	Device node
+status	Property
+;	Terminates a property
+Property Types
+String
+label = "LED1";
+Integer
+reg = <1>;
+Multiple Integers
+reg = <0x4804c000 0x1000>;
+String List
+compatible = "vendor,device", "generic-device";
+Referencing Other Nodes
+
+Example:
+
+gpios = <&gpio1 17 GPIO_ACTIVE_HIGH>;
+
+Meaning:
+
+&gpio1            -> reference existing GPIO controller
+17                -> GPIO number within controller
+GPIO_ACTIVE_HIGH  -> active state
+
+The &gpio1 is a label defined elsewhere in the SoC DTSI file.
+
+Labels
+
+You can create labels:
+
+myled: led_node {
+    label = "LED1";
+};
+
+Reference later:
+
+something = <&myled>;
+GPIO Example
+
+For your GPIO1_17 LED:
+
+/ {
+    leds {
+        compatible = "gpio-leds";
+
+        ext_led {
+            label = "ext_led";
+            gpios = <&gpio1 17 GPIO_ACTIVE_HIGH>;
+            default-state = "off";
+        };
+    };
+};
+Pinmux Example (AM335x / BBB)
+
+A GPIO often needs pin multiplexing.
+
+Example pattern:
+
+&pinctrl {
+
+    my_led_pins: pinmux_my_led_pins {
+        pinctrl-single,pins = <
+            0x150 0x07
+        >;
+    };
+};
+
+Then:
+
+&ocp {
+    myled {
+        pinctrl-names = "default";
+        pinctrl-0 = <&my_led_pins>;
+    };
+};
+Include Files
+
+Most board DTS files include common SoC definitions.
+
+Example:
+
+#include "am33xx.dtsi"
+
+This is why you can use:
+
+&gpio1
+&uart1
+&i2c1
+
+without defining them yourself.
+
+How Driver Matches DTS
+
+DTS:
+
+myled {
+    compatible = "prabin,myled";
+};
+
+Driver:
+
+static const struct of_device_id my_of_match[] = {
+    { .compatible = "prabin,myled" },
+    { }
+};
+
+Linux automatically matches the node to the driver.
+
+Learning by Existing BBB DTS Files
+
+The best way to learn is to study the BeagleBone DTS files:
+
+cd <kernel_source>/arch/arm/boot/dts
+
+less am335x-boneblack.dts
+less am33xx.dtsi
+
+Look at how:
+
+LEDs are defined
+GPIOs are defined
+UARTs are defined
+I2C devices are defined
+
+Most Embedded Linux engineers learn DTS by modifying existing examples rather than writing everything from scratch.
+
+Recommended Learning Order
+Basic DTS syntax
+GPIO LEDs (gpio-leds)
+GPIO keys (gpio-keys)
+Pinmux configuration
+I2C devices
+SPI devices
+Custom platform driver with compatible
+Interrupts, clocks, DMA
+
+For your BeagleBone Black, a good exercise is:
+
+Connect an LED to GPIO1_17.
+Add a gpio-leds node in DTS.
+Recompile the DTB.
+Boot Linux and verify that /sys/class/leds/ext_led/ appears automatically. This teaches the most common DTS concepts in one project.
+
+**************************************************************************************************

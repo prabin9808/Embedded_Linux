@@ -86,7 +86,7 @@ void process_brightness_values(int value)
 			break;
 		default:
 			printf("Invalid Value\n");
-			printf("Valid Brightness Value" 0, 1 \n");
+			printf("Valid Brightness Value 0, 1 \n");
 	}
 }
 

@@ -1,0 +1,132 @@
+UBoot
+-----------------
+1. Download uboot from official link
+Go to soc folder
+	cd board
+	cd ti
+	here am335x folder is available which is use in beaglebone black
+	
+Cpu specific folder and files  (CPU based initialization for differnet Architecture)
+	cd arch/arm
+	cd cpu
+	cd armv7  (It is for beaglebone black)
+	
+	
+	   RBL 
+	    |
+  SPL | Start.s
+		|
+SPL	 CPU Inits
+	    |
+SPL	 Soc Inits  --> Read and Jump to uboot
+	
+	
+	ls -1 | wc -l
+	
+	TPS65217
+	--------------
+	Core Voltage      (e.g. 1.1V)
+	DDR Voltage       (e.g. 1.5V)
+	I/O Voltage       (e.g. 3.3V)
+	PLL/Analog Power
+	RTC Power
+	
+	Correct:
+		1. Core rail up
+		2. DDR rail up
+		3. I/O rail up
+		4. Release reset
+
+	Wrong:
+		1. I/O rail up
+		2. Core rail missing
+		3. Signals driven into unpowered logic
+		
+		Correct:
+1. Core rail up
+2. DDR rail up
+3. I/O rail up
+4. Release reset
+
+Wrong:
+1. I/O rail up
+2. Core rail missing
+3. Signals driven into unpowered logic
+
+
+High-Speed Signals
+
+DDR3 runs at hundreds of MHz.
+
+Typical signals:
+
+Address Bus
+Data Bus
+Clock
+DQS (Data Strobe)
+Control Signals
+
+These signals switch very fast.
+
+Even a few millimeters of PCB trace mismatch can matter.
+
+Length Matching
+
+Example:
+
+DQ0  = 50 mm
+DQ1  = 51 mm
+DQ2  = 50.5 mm
+DQ3  = 80 mm   ← Problem
+
+The longer signal arrives later.
+
+The memory controller may sample incorrect data.
+
+Result:
+
+Random crashes
+Kernel panic
+Data corruption
+Boot failures
+DDR Timing Analogy
+
+Imagine 16 runners must cross a finish line at exactly the same time.
+
+CPU -----------------> DDR
+
+If one runner takes a much longer path, synchronization is lost.
+
+DDR routing tries to make all critical signals arrive together.
+
+Real-World Symptoms of Bad DDR Layout
+
+You may see:
+
+Sometimes boots
+Sometimes hangs
+Linux crashes after hours
+Kernel panic
+Filesystem corruption
+Random reboots
+
+These issues can be extremely difficult to debug because the software looks correct.
+
+Which is Harder?
+
+For an AM335x custom board:
+
+Area	Difficulty
+Ethernet PHY	Medium
+USB	Medium
+eMMC	Medium
+Power Sequencing	High
+DDR Layout	Very High
+
+Many first-time AM335x board designs fail because of DDR routing or power design issues, which is why engineers often start from TI's reference schematic and layout guidelines instead of creating everything from scratch.
+
+If you eventually design an AM335x board, I would strongly recommend studying the BeagleBone Black DDR and power sections first—they are proven designs that have already solved these challenges.
+
+
+**************************************************************************
+rc2/config

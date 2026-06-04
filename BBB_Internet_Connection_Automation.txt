@@ -1,0 +1,130 @@
+sudo nano /usr/local/bin/bbb-share.sh
+#!/bin/bash
+
+WAN_IF=wlan0
+USB_IF=$1
+
+sysctl -w net.ipv4.ip_forward=1
+
+iptables -t nat -C POSTROUTING -o $WAN_IF -j MASQUERADE 2>/dev/null || \
+iptables -t nat -A POSTROUTING -o $WAN_IF -j MASQUERADE
+
+iptables -C FORWARD -i $USB_IF -o $WAN_IF -j ACCEPT 2>/dev/null || \
+iptables -A FORWARD -i $USB_IF -o $WAN_IF -j ACCEPT
+
+iptables -C FORWARD -i $WAN_IF -o $USB_IF -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
+iptables -A FORWARD -i $WAN_IF -o $USB_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+
+sudo chmod +x /usr/local/bin/bbb-share.sh
+
+sudo nano /etc/udev/rules.d/99-beaglebone.rules
+
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="usb0", RUN+="/usr/local/bin/bbb-share.sh usb0"
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+
+BBB Side
+-----------------
+sudo nano /etc/rc.local
+
+ip route replace default via 192.168.7.1 dev usb0
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+
+-----------------------------------------------------------------------
+
+
+*************************************************************************
+
+Option 1: Use NetworkManager (Recommended)
+
+If your Linux PC uses NetworkManager (Ubuntu, Debian Desktop, Fedora, etc.), you can configure the USB Ethernet interface once and let NetworkManager automatically share Internet whenever the BBB appears.
+
+Find the BBB USB interface:
+
+ip link
+
+It may appear as usb0 or enx....
+
+Configure connection sharing:
+
+nmcli connection modify "usb0" ipv4.method shared
+nmcli connection up "usb0"
+
+Or create a new shared connection:
+
+nmcli connection add type ethernet ifname usb0 con-name bbb-share ipv4.method shared
+
+NetworkManager will then:
+
+Assign IP addresses
+Run DHCP
+Configure NAT
+Share Internet automatically
+
+No manual iptables commands are needed.
+
+Option 2: Automatic udev Script
+
+Create a script:
+
+sudo nano /usr/local/bin/bbb-share.sh
+#!/bin/bash
+
+WAN_IF=wlan0
+USB_IF=$1
+
+sysctl -w net.ipv4.ip_forward=1
+
+iptables -t nat -C POSTROUTING -o $WAN_IF -j MASQUERADE 2>/dev/null || \
+iptables -t nat -A POSTROUTING -o $WAN_IF -j MASQUERADE
+
+iptables -C FORWARD -i $USB_IF -o $WAN_IF -j ACCEPT 2>/dev/null || \
+iptables -A FORWARD -i $USB_IF -o $WAN_IF -j ACCEPT
+
+iptables -C FORWARD -i $WAN_IF -o $USB_IF -m state --state RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || \
+iptables -A FORWARD -i $WAN_IF -o $USB_IF -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+Make it executable:
+
+sudo chmod +x /usr/local/bin/bbb-share.sh
+
+Create a udev rule:
+
+sudo nano /etc/udev/rules.d/99-beaglebone.rules
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="usb0", RUN+="/usr/local/bin/bbb-share.sh usb0"
+
+Reload:
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+Now when the BBB USB Ethernet interface appears, the Linux PC automatically enables Internet sharing.
+
+BBB Side
+
+If your BBB runs the standard Debian image, it usually receives:
+
+PC: 192.168.7.1
+BBB: 192.168.7.2
+
+You can make the BBB automatically set its route at boot:
+
+sudo nano /etc/rc.local
+
+Add before exit 0:
+
+ip route replace default via 192.168.7.1 dev usb0
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+Then every time:
+
+Connect BBB to Linux PC via USB.
+Linux PC automatically shares Internet.
+BBB automatically sets its gateway.
+BBB has Internet access without any manual commands.
+
+For a BeagleBone Black running Debian Bookworm/Bullseye, NetworkManager's ipv4.method shared approach is usually the cleanest and most reliable solution.

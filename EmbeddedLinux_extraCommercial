@@ -6,3 +6,31 @@ STM32MP257
 i.MX 6ULL
 i.MX 8M Mini
 i.MX 93
+
+These are popular because of:
+
+Long-term availability (10–15 years)
+Strong Linux support
+Industrial temperature grades
+Good vendor documentation
+Networking / Gateways / Routers
+Qualcomm IPQ series
+MediaTek networking SoCs
+NXP Layerscape series
+Smart Displays / HMIs
+STM32MP157
+i.MX 8M Mini
+RK3568
+AI Cameras / Vision Products
+i.MX 8M Plus
+STM32MP257
+RK3588
+Railway and Transportation
+
+Commonly seen:
+
+i.MX 6ULL
+i.MX 8M Mini
+STM32MP157
+
+because of long lifecycle, reliability, and industrial support.

@@ -1,0 +1,8 @@
+/{
+	mygpio {
+
+		compatible = "custom,mygpio";
+        	led-gpios = <&gpio1 28 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+};

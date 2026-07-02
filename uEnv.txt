@@ -1,14 +1,59 @@
-mypcip=setenv serverip 192.168.1.2
-ipaddr=192.168.34.1
-bootargs= console=ttyUSB0 root=/dev/mmcblk0p2 rw
-bootcmd=echo "************* Booting From Memory uEnv.txt file written by Prabin Kumar **********"; load mmc 0:1 0x82000000 uImage; load mmc 0:1 0x88000000 am335x-boneblack.dtb; bootm 0x82000000 - 0x88000000;
+#Docs: http://elinux.org/Beagleboard:U-boot_partitioning_layout_2.0
 
-bootdelay=5
-serverip=192.168.1.2
-ipaddr=192.168.34.1
-bootargs=console=ttyS0,115200 root=/dev/mmcblk0p2 rw
-bootcmd=echo "******** Booting BeagleBone Black using zImage ********"; \
-load mmc 0:1 0x82000000 zImage; \
-load mmc 0:1 0x88080000 initramfs.cpio.gz;\   # This is optional
-load mmc 0:1 0x88000000 am335x-boneblack.dtb; \
-bootz 0x82000000 - 0x88000000
+uname_r=5.10.168-ti-r71
+#uuid=
+#dtb=
+dtb=am335x-boneblack.dtb
+
+###U-Boot Overlays###
+###Documentation: http://elinux.org/Beagleboard:BeagleBoneBlack_Debian#U-Boot_Overlays
+###Master Enable
+enable_uboot_overlays=1
+###
+###Overide capes with eeprom
+#uboot_overlay_addr0=<file0>.dtbo
+#uboot_overlay_addr1=<file1>.dtbo
+#uboot_overlay_addr2=<file2>.dtbo
+#uboot_overlay_addr3=<file3>.dtbo
+###
+###Additional custom capes
+#uboot_overlay_addr4=<file4>.dtbo
+#uboot_overlay_addr5=<file5>.dtbo
+#uboot_overlay_addr6=<file6>.dtbo
+#uboot_overlay_addr7=<file7>.dtbo
+###
+###Custom Cape
+#dtb_overlay=<file8>.dtbo
+###
+###Disable auto loading of virtual capes (emmc/video/wireless/adc)
+#disable_uboot_overlay_emmc=1
+#disable_uboot_overlay_video=1
+#disable_uboot_overlay_audio=1
+#disable_uboot_overlay_wireless=1
+#disable_uboot_overlay_adc=1
+###
+###Cape Universal Enable
+enable_uboot_cape_universal=1
+###
+###Debug: disable uboot autoload of Cape
+#disable_uboot_overlay_addr0=1
+#disable_uboot_overlay_addr1=1
+#disable_uboot_overlay_addr2=1
+#disable_uboot_overlay_addr3=1
+###
+###U-Boot fdt tweaks... (60000 = 384KB)
+#uboot_fdt_buffer=0x60000
+###U-Boot Overlays###
+
+console=ttyS0,115200n8
+cmdline=coherent_pool=1M net.ifnames=0 lpj=1990656 rng_core.default_quality=100 quiet
+
+#In the event of edid real failures, uncomment this next line:
+#cmdline=coherent_pool=1M net.ifnames=0 lpj=1990656 rng_core.default_quality=100 quiet video=HDMI-A-1:1024x768@60e
+
+#Use an overlayfs on top of a read-only root filesystem:
+#cmdline=coherent_pool=1M net.ifnames=0 lpj=1990656 rng_core.default_quality=100 quiet overlayroot=tmpfs
+
+##enable Generic eMMC Flasher:
+#cmdline=init=/usr/sbin/init-beagle-flasher
+

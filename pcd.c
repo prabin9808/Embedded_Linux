@@ -10,6 +10,29 @@ dev_t device_number;  // This holds device number
 // cdev variable
 struct cdev pcd_cdev;
 
+loff_t pcd_lseek(struct file *filp,loff_t off, int whence)
+{
+	return 0;
+}
+ssize_t pcd_read(struct file *filp, const char __user *buff, size_t loff_t *f_pos)
+{
+	return 0;
+}
+
+ssize_t pcd_write(struct file *filp, const char __user *buff, size_t loff_t *f_pos)
+{
+	return 0;
+}
+int pcd_open(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
+int pcd_release(struct inode *inode, struct file *filp)
+{
+	return 0;
+}
+
 // file operations of the driver
 struct file_operations pcd_fops;
 

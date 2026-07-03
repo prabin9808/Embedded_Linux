@@ -44,7 +44,6 @@ static int __init pcd_driver_init(void)
 	
 	// 2. make a char device registratiom with the VFS 
 	// 	initialize the cdev structure with fops
-	
 	cdev_init(&pcd_cdev,&pcd_fops);
 
 	// 3. Register cdev structure with VFS

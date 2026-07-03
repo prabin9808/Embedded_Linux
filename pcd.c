@@ -34,7 +34,15 @@ int pcd_release(struct inode *inode, struct file *filp)
 }
 
 // file operations of the driver
-struct file_operations pcd_fops;
+struct file_operations pcd_fops ={
+			.open = pcd_open, 
+			.write = pcd_write,  
+			.read= pcd_read, 
+			.llseek=pcd_lseek, 
+			.release=pcd_release, 
+			.owner= THIS_MODULE,
+			{}
+		};
 
 
 static int __init pcd_driver_init(void)
